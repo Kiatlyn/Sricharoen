@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>จองโต๊ะ</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        .restaurant-layout {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+            align-items: flex-start;
+        }
+        .column {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+            min-height: 500px;
+            justify-content: space-between;
+        }
+        .table {
+            width: 50px;
+            height: 50px;
+            border: 2px solid black;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex-direction: column;
+            font-size: 12px;
+        }
+        .available {
+            background-color: lightgreen;
+        }
+        .booked {
+            background-color: red;
+            cursor: not-allowed;
+            color: white;
+        }
+        .selected {
+            background-color: orange;
+        }
+        #reset-btn {
+            display: none; /* ซ่อนปุ่มรีเซ็ตโดยค่าเริ่มต้น */
+        }
+    </style>
+</head>
+<body>
+    <h1>เลือกที่นั่งของคุณ</h1>
+    <div id="restaurant-info"></div>
+    <div class="restaurant-layout" id="layout"></div>
+    <br>
+    <label for="customer-name">ชื่อผู้จอง: </label>
+    <input type="text" id="customer-name" placeholder="กรอกชื่อของคุณ">
+    <br><br>
+    <button id="confirm-btn">ยืนยันการจอง</button>
+    <button id="reset-btn">รีเซ็ตการจอง</button>
+    <button id="admin-login">ล็อกอินแอดมิน</button>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const layout = document.getElementById("layout");
+            const rowConfig = [7, 11, 11, 11, 11, 11, 8];
+            let selectedTable = null;
+            let tableNumber = 1;
+            let maxTables = Math.max(...rowConfig);
+            let bookedTables = {}; // เก็บข้อมูลโต๊ะที่ถูกจอง
+            let isAdmin = false;
+
+            rowConfig.forEach((numTables, rowIndex) => {
+                const column = document.createElement("div");
+                column.classList.add("column");
+                
+                if (rowIndex === 0 || rowIndex === rowConfig.length - 1) {
+                    let paddingSize = (maxTables - numTables) / 2 * 50;
+                    column.style.paddingTop = `${paddingSize}px`;
+                    column.style.paddingBottom = `${paddingSize}px`;
+                }
+                
+                for (let i = 0; i < numTables; i++) {
+                    const table = document.createElement("div");
+                    table.classList.add("table", "available");
+                    table.dataset.table = tableNumber;
+                    table.innerHTML = `<span>${tableNumber}</span>`;
+                    
+                    table.addEventListener("click", () => {
+                        if (!table.classList.contains("booked")) {
+                            if (selectedTable) {
+                                selectedTable.classList.remove("selected");
+                            }
+                            table.classList.add("selected");
+                            selectedTable = table;
+                        }
+                    });
+                    
+                    column.appendChild(table);
+                    tableNumber++;
+                }
+                layout.appendChild(column);
+            });
+
+            document.getElementById("confirm-btn").addEventListener("click", () => {
+                const customerName = document.getElementById("customer-name").value.trim();
+                if (!selectedTable) {
+                    alert("กรุณาเลือกโต๊ะก่อน!");
+                } else if (customerName === "") {
+                    alert("กรุณากรอกชื่อของคุณ!");
+                } else {
+                    const tableNumber = selectedTable.dataset.table;
+                    bookedTables[tableNumber] = customerName;
+                    selectedTable.classList.remove("available", "selected");
+                    selectedTable.classList.add("booked");
+                    selectedTable.innerHTML = `<span>${tableNumber}</span><br><small>${customerName}</small>`;
+                    selectedTable.style.cursor = "not-allowed";
+                    selectedTable.removeEventListener("click", () => {});
+                    alert(`คุณ ${customerName} จองโต๊ะหมายเลข ${tableNumber} เรียบร้อยแล้ว!`);
+                }
+            });
+
+            document.getElementById("reset-btn").addEventListener("click", () => {
+                if (isAdmin) {
+                    document.querySelectorAll(".table").forEach(table => {
+                        table.classList.remove("booked", "selected");
+                        table.classList.add("available");
+                        table.innerHTML = `<span>${table.dataset.table}</span>`;
+                        table.style.cursor = "pointer";
+                    });
+                    bookedTables = {}; // รีเซ็ตข้อมูลโต๊ะที่จองไว้
+                    alert("รีเซ็ตโต๊ะทั้งหมดเรียบร้อยแล้ว!");
+                } else {
+                    alert("คุณไม่มีสิทธิ์ในการรีเซ็ตโต๊ะ!");
+                }
+            });
+
+            document.getElementById("admin-login").addEventListener("click", () => {
+                const password = prompt("กรุณาใส่รหัสผ่านแอดมิน:");
+                if (password === "admin123") {
+                    isAdmin = true;
+                    document.getElementById("reset-btn").style.display = "block";
+                    alert("ล็อกอินสำเร็จ! ปุ่มรีเซ็ตสามารถใช้งานได้");
+                } else {
+                    alert("รหัสผ่านไม่ถูกต้อง!");
+                }
+            });
+        });
+    </script>
+</body>
+</html>
